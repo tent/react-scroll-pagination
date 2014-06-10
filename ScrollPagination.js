@@ -54,7 +54,11 @@ window.ScrollPagination = React.createClass({
 		this.__unloadingPage = false;
 
 		// save scroll position
-		this.__scrollY = this.__scrollParent.scrollTop;
+		if (this.__scrollParent === window) {
+			this.__scrollY = window.scrollY;
+		} else {
+			this.__scrollY = this.__scrollParent.scrollTop;
+		}
 
 		this.__determinePagesDelta(props.pageIds);
 
@@ -66,7 +70,11 @@ window.ScrollPagination = React.createClass({
 		this.__updateDimensions();
 
 		// restore scroll position
-		this.__scrollParent.scrollTop = this.__scrollY;
+		if (this.__scrollParent === window) {
+			window.scrollTo(0, this.__scrollY);
+		} else {
+			this.__scrollParent.scrollTop = this.__scrollY;
+		}
 		delete this.__scrollY;
 
 		this.__evaluatePagesMutation();
@@ -196,7 +204,12 @@ window.ScrollPagination = React.createClass({
 					pageHeightDelta = oldPageHeight - offsetHeightDelta;
 				}
 				if (this.__paddingTop < 1) {
-					var __scrollTop = scrollParent.scrollTop;
+					var __scrollTop;
+					if (scrollParent === window) {
+						__scrollTop = window.scrollY;
+					} else {
+						__scrollTop = scrollParent.scrollTop;
+					}
 					this.__scrollY = __scrollTop + offsetHeightDelta;
 				}
 				this.__paddingTop = Math.max(this.__paddingTop - offsetHeightDelta - pageHeightDelta, 0);
@@ -226,7 +239,11 @@ window.ScrollPagination = React.createClass({
 		this.__offsetTop = offsetTop;
 
 		if (scrollParent) {
-			this.__viewportHeight = parseInt(window.getComputedStyle(scrollParent).height, 10);
+			if (scrollParent === window) {
+				this.__viewportHeight = window.innerHeight;
+			} else {
+				this.__viewportHeight = parseInt(window.getComputedStyle(scrollParent).height, 10);
+			}
 		}
 	},
 
@@ -241,7 +258,12 @@ window.ScrollPagination = React.createClass({
 			return;
 		}
 
-		var scrollY = this.__scrollParent.scrollTop;
+		var scrollY;
+		if (this.__scrollParent === window) {
+			scrollY = window.scrollY;
+		} else {
+			scrollY = this.__scrollParent.scrollTop;
+		}
 		var viewportHeight = this.__viewportHeight;
 		var paddingTop = this.__paddingTop;
 		var remainingScrollBottom = this.__offsetHeight + this.__offsetBottom - scrollY - viewportHeight;
