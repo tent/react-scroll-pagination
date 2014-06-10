@@ -6,6 +6,7 @@ ScrollPagination
 ## Usage
 
 ```
+/** @jsx React.DOM */
 <ScrollPagination
 	pageIds={ Array() }
 	hasPrevPage={ Boolean() }
@@ -16,6 +17,17 @@ ScrollPagination
 
 	<h1>Render content here</h1>
 </ScrollPagination>
+```
+
+```javascript
+ScrollPagination({
+	pageId: Array(),
+	hasPrevPage: Boolean(),
+	hasNextPage: Boolean(),
+	loadPrevPage: function(){},
+	loadNextPage: function(){},
+	unloadPage: function (pageId) {}
+}, React.DOM.h1(null, "Render content here"))
 ```
 
 - `pageIds` must be an array of all page ids currently rendered. The initial render must only contain a single page id and subsequent renders must only add or remove a single page id.
