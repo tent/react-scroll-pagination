@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 (function () {
 "use strict";
 
@@ -85,11 +83,10 @@ window.ScrollPagination = React.createClass({
 		if (this.__paddingTop) {
 			style.paddingTop = this.__paddingTop + "px";
 		}
-		return (
-			<div ref="wrapper" style={style}>
-				{this.props.children}
-			</div>
-		);
+		return React.DOM.div({
+			style: style,
+			ref: "wrapper"
+		}, this.props.children);
 	},
 
 	__unloadPage: function (pageId) {
