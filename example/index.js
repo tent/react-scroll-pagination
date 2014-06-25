@@ -13,8 +13,8 @@
 				loadNextPage: this.props.loadNextPage,
 				loadPrevPage: this.props.loadPrevPage,
 				unloadPage: this.props.unloadPage,
-				hasNextPage: this.props.hasNextPage,
-				hasPrevPage: this.props.hasPrevPage,
+				nextPageCount: this.props.nextPageCount,
+				prevPageCount: this.props.prevPageCount
 			}, this.props.pages.map(function (page, index) {
 				return Page({ key: page.id, id: page.id, onPageEvent: this.__handlePageEvent }, page.items.map(function (item) {
 					return React.DOM.div({ key: item.id, style: { paddingTop: index + "px" } }, item.text);
@@ -61,6 +61,22 @@
 		return true;
 	};
 
+	var nextPageCount = function () {
+		if (loadedPages.length === 0) {
+			return pages.length;
+		}
+		var lastIndex = pages.indexOf(loadedPages[loadedPages.length-1]);
+		return pages.length - lastIndex;
+	};
+
+	var prevPageCount = function () {
+		if (loadedPages.length === 0) {
+			return 0;
+		}
+		var firstIndex = pages.indexOf(loadedPages[0]);
+		return firstIndex;
+	};
+
 	var loadNextPage = function () {
 		setTimeout(function () {
 			var lastLoadedPage = loadedPages[loadedPages.length-1];
@@ -74,7 +90,7 @@
 
 			view.setProps({
 				pages: loadedPages,
-				hasNextPage: hasNextPage()
+				nextPageCount: nextPageCount(),
 			});
 		}, 0);
 	};
@@ -92,7 +108,7 @@
 
 			view.setProps({
 				pages: loadedPages,
-				hasPrevPage: hasPrevPage()
+				prevPageCount: prevPageCount()
 			});
 		}, 0);
 	};
@@ -110,14 +126,14 @@
 			}
 
 			if (page === null) {
-				throw new Error("Invalid attempt to unload page: "+ pageId +"\n"+ JSON.stringify(loadedPages.map(function (p) { return p.id; })));
+				// throw new Error("Invalid attempt to unload page: "+ pageId +"\n"+ JSON.stringify(loadedPages.map(function (p) { return p.id; })));
+			} else {
+				loadedPages = loadedPages.slice(0, index).concat(loadedPages.slice(index+1, loadedPages.length));
 			}
-
-			loadedPages = loadedPages.slice(0, index).concat(loadedPages.slice(index+1, loadedPages.length));
 			view.setProps({
 				pages: loadedPages,
-				hasNextPage: hasNextPage(),
-				hasPrevPage: hasPrevPage()
+				nextPageCount: nextPageCount(),
+				prevPageCount: prevPageCount()
 			});
 		}, 0);
 	};
@@ -128,8 +144,8 @@
 		loadNextPage: loadNextPage,
 		loadPrevPage: loadPrevPage,
 		unloadPage: unloadPage,
-		hasNextPage: true,
-		hasPrevPage: false
+		nextPageCount: nextPageCount(),
+		prevPageCount: prevPageCount()
 	}), el);
 
 	loadNextPage();

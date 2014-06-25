@@ -18,6 +18,15 @@ var findScrollParent = function (el) {
 var ScrollPagination = window.ScrollPagination = React.createClass({
 	displayName: "ScrollPagination",
 
+	getInitialState: function () {
+		return {
+			hasPrevPage: false,
+			hasNextPage: false,
+			prevPagesMargin: 0,
+			nextPagesMargin: 0
+		};
+	},
+
 	getDefaultProps: function () {
 		return {
 			hasPrevPage: false,
@@ -30,6 +39,8 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 	componentWillMount: function () {
 		this.__pages = {};
 		this.__pageIds = [];
+
+		this.__initPageExistance(this.props);
 	},
 
 	componentDidMount: function () {
@@ -37,8 +48,14 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		scrollParent.addEventListener("scroll", this.__handleScroll, false);
 		scrollParent.addEventListener("resize", this.__handleResize, false);
 
+		this.__mounted = true;
+
 		this.__updatePageIds();
 		this.__updateDimensions();
+	},
+
+	componentWillReceiveProps: function (nextProps) {
+		this.__initPageExistance(nextProps);
 	},
 
 	componentDidUpdate: function () {
@@ -60,8 +77,11 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 
 	render: function () {
 		var style = {};
-		if (this.__paddingTop) {
-			style.paddingTop = this.__paddingTop + "px";
+		if (this.state.prevPagesMargin) {
+			style.paddingTop = this.state.prevPagesMargin + "px";
+		}
+		if (this.state.nextPagesMargin) {
+			style.paddingBottom = this.state.nextPagesMargin + "px";
 		}
 		return React.DOM.div({
 			style: style,
@@ -71,26 +91,67 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 
 	// called from Page component via parent component
 	handlePageEvent: function (pageId, event) {
-		var pages = this.__pages;
-		switch (event.name) {
-			case "mount":
-				pages[pageId] = {
-					id: pageId,
-					height: event.height
-				};
-			break;
+		if (event.name === "mount" || event.name === "update") {
+			this.__pages[pageId] = {
+				id: pageId,
+				height: event.height
+			};
 
-			case "update":
-				pages[pageId] = {
-					id: pageId,
-					height: event.height
-				};
-			break;
-
-			case "unmount":
-			break;
+			this.__updateMargins();
 		}
-		this.__pages = pages;
+	},
+
+	__initPageExistance: function (props) {
+		var hasPrevPage = false;
+		if (Number.isInteger(props.prevPageCount) && props.prevPageCount > 0) {
+			hasPrevPage = true;
+		} else {
+			hasPrevPage = props.hasPrevPage;
+		}
+
+		var hasNextPage = false;
+		if (Number.isInteger(props.nextPageCount) && props.nextPageCount > 0) {
+			hasNextPage = true;
+		} else {
+			hasNextPage = props.hasNextPage;
+		}
+
+		this.setState({
+			hasPrevPage: hasPrevPage,
+			hasNextPage: hasNextPage
+		});
+	},
+
+	__updateMargins: function () {
+		if ( !this.__mounted ) {
+			return;
+		}
+
+		var avgHeight = 0;
+		var count = 0;
+		var sum = 0;
+		var pages = this.__pages;
+		Object.keys(pages).forEach(function (pageId) {
+			count++;
+			sum += pages[pageId].height;
+		});
+		avgHeight = Math.round(sum / count);
+
+		var prevPagesMargin = 0;
+		var nextPagesMargin = 0;
+
+		if (Number.isInteger(this.props.prevPageCount)) {
+			prevPagesMargin = this.props.prevPageCount * avgHeight;
+		}
+
+		if (Number.isInteger(this.props.nextPageCount)) {
+			nextPagesMargin = this.props.nextPageCount * avgHeight;
+		}
+
+		this.setState({
+			prevPagesMargin: prevPagesMargin,
+			nextPagesMargin: nextPagesMargin
+		});
 	},
 
 	__unloadPage: function (pageId) {
@@ -102,7 +163,7 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 	},
 
 	__loadPrevPage: function () {
-		if (this.__loadingPrevPage || !this.props.hasPrevPage) {
+		if (this.__loadingPrevPage || !this.state.hasPrevPage) {
 			return;
 		}
 		this.__loadingPrevPage = true;
@@ -110,7 +171,7 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 	},
 
 	__loadNextPage: function () {
-		if (this.__loadingNextPage || !this.props.hasNextPage) {
+		if (this.__loadingNextPage || !this.state.hasNextPage) {
 			return;
 		}
 		this.__loadingNextPage = true;
@@ -218,7 +279,7 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		if (this.__dimentions.contentHeight === 0) {
 			return;
 		}
-		if (this.__loadingNextPage || this.__loadingPrevPage || this.__unloadingPage || !(this.props.hasNextPage || this.props.hasPrevPage)) {
+		if (this.__loadingNextPage || this.__loadingPrevPage || this.__unloadingPage || !(this.state.hasNextPage || this.state.hasPrevPage)) {
 			if (e) {
 				e.preventDefault();
 			}
@@ -245,17 +306,29 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		var remainingScrollBottom = contentHeight - scrollY - viewportHeight + offsetTop;
 		var remainingScrollTop = contentHeight - remainingScrollBottom - viewportHeight;
 
-		if (lastPage && remainingScrollBottom < (lastPage.height / 3)) {
-			if (secondPage && remainingScrollTop > (firstPage.height + secondPage.height)) {
-				this.__unloadPage(firstPage.id);
-			} else {
-				this.__loadNextPage();
+		if (Number.isInteger(this.props.nextPageCount)) {
+			console.log("TODO: calculate current page from scroll position");
+		} else {
+			if (lastPage && remainingScrollBottom < (lastPage.height / 3)) {
+				if (secondPage && remainingScrollTop > (firstPage.height + secondPage.height)) {
+					this.__unloadPage(firstPage.id);
+				} else {
+					this.__loadNextPage();
+				}
+				return;
 			}
-		} else if (firstPage && remainingScrollTop < (firstPage.height / 3)) {
-			if (secondLastPage && remainingScrollBottom > (lastPage.height + secondLastPage.height)) {
-				this.__unloadPage(lastPage.id);
-			} else {
-				this.__loadPrevPage();
+		}
+
+		if (Number.isInteger(this.props.prevPageCount)) {
+			console.log("TODO: calculate current page from scroll position");
+		} else {
+			if (firstPage && remainingScrollTop < (firstPage.height / 3)) {
+				if (secondLastPage && remainingScrollBottom > (lastPage.height + secondLastPage.height)) {
+					this.__unloadPage(lastPage.id);
+				} else {
+					this.__loadPrevPage();
+				}
+				return;
 			}
 		}
 	},
