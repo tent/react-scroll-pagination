@@ -16,7 +16,7 @@
 				hasNextPage: this.props.hasNextPage,
 				hasPrevPage: this.props.hasPrevPage,
 			}, this.props.pages.map(function (page, index) {
-				return Page({ key: page.id, id: page.id, onPageEvent: this.__handlePageEvent.bind(this, page.id) }, page.items.map(function (item) {
+				return Page({ key: page.id, id: page.id, onPageEvent: this.__handlePageEvent }, page.items.map(function (item) {
 					return React.DOM.div({ key: item.id, style: { paddingTop: index + "px" } }, item.text);
 				}.bind(this)));
 			}.bind(this)));

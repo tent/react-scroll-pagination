@@ -21,11 +21,11 @@ function handlePageEvent(pageId, event) {
 	loadNextPage={ function(){} }
 	unloadPage={ function (pageId) {} }>
 
-	<Page id="page-1" onPageEvent={handlePageEvent.bind(this, "page-1")}>
+	<Page id="page-1" onPageEvent={handlePageEvent}>
 		<h1>Render first page of content here</h1>
 	</Page>
 
-	<Page id="page-2" onPageEvent={handlePageEvent.bind(this, "page-2")}>
+	<Page id="page-2" onPageEvent={handlePageEvent}>
 		<h1>Render second page of content here</h1>
 	</Page>
 </ScrollPagination>
@@ -45,11 +45,11 @@ ScrollPagination({
 },
 	ScrollPagination.Page({
 		id: "page-1",
-		onPageEvent: handlePageEvent.bind(this, "page-1") },
+		onPageEvent: handlePageEvent },
 			React.DOM.h1(null, "Render first page of content here")),
 	ScrollPagination.Page({
 		id: "page-2",
-		onPageEvent: handlePageEvent.bind(this, "page-2") },
+		onPageEvent: handlePageEvent },
 			React.DOM.h1(null, "Render second page of content here")))
 ```
 
