@@ -15,67 +15,39 @@ var findScrollParent = function (el) {
 	return window;
 };
 
-window.ScrollPagination = React.createClass({
+var ScrollPagination = window.ScrollPagination = React.createClass({
 	displayName: "ScrollPagination",
 
 	getDefaultProps: function () {
 		return {
-			pageIds: [],
+			hasPrevPage: false,
+			hasNextPage: false,
 			loadPrevPage: function () {},
 			loadNextPage: function () {}
 		};
 	},
 
 	componentWillMount: function () {
-		this.__paddingTop = 0;
-		this.__offsetHeight = 0;
-		this.__offsetTop = 0;
-		this.__offsetBottom = 0;
-
-		this.__renderedPageIds = [];
-		this.__unloadedPageHeights = {};
-		this.__pageHeights = {};
+		this.__pages = {};
+		this.__pageIds = [];
 	},
 
 	componentDidMount: function () {
 		var scrollParent = this.__scrollParent = findScrollParent(this.getDOMNode());
-		this.__updateDimensions();
-		this.__evaluatePagesMutation();
 		scrollParent.addEventListener("scroll", this.__handleScroll, false);
 		scrollParent.addEventListener("resize", this.__handleResize, false);
 
-		this.__hasPrevPage = this.props.hasPrevPage;
-		this.__hasNextPage = this.props.hasNextPage;
-	},
-
-	componentWillUpdate: function (props) {
-		this.__loadingPrevPage = false;
-		this.__loadingNextPage = false;
-		this.__unloadingPage = false;
-
-		// save scroll position
-		if (this.__scrollParent === window) {
-			this.__scrollY = window.scrollY;
-		} else {
-			this.__scrollY = this.__scrollParent.scrollTop;
-		}
-
-		this.__determinePagesDelta(props.pageIds);
-
-		this.__hasPrevPage = props.hasPrevPage;
-		this.__hasNextPage = props.hasNextPage;
+		this.__updatePageIds();
+		this.__updateDimensions();
 	},
 
 	componentDidUpdate: function () {
+		this.__updatePageIds();
 		this.__updateDimensions();
 
-		// restore scroll position
-		if (this.__scrollParent === window) {
-			window.scrollTo(0, this.__scrollY);
-		} else {
-			this.__scrollParent.scrollTop = this.__scrollY;
-		}
-		delete this.__scrollY;
+		this.__loadingNextPage = false;
+		this.__loadingPrevPage = false;
+		this.__unloadingPage = false;
 
 		this.__evaluatePagesMutation();
 	},
@@ -97,6 +69,30 @@ window.ScrollPagination = React.createClass({
 		}, this.props.children);
 	},
 
+	// called from Page component via parent component
+	handlePageEvent: function (pageId, event) {
+		var pages = this.__pages;
+		switch (event.name) {
+			case "mount":
+				pages[pageId] = {
+					id: pageId,
+					height: event.height
+				};
+			break;
+
+			case "update":
+				pages[pageId] = {
+					id: pageId,
+					height: event.height
+				};
+			break;
+
+			case "unmount":
+			break;
+		}
+		this.__pages = pages;
+	},
+
 	__unloadPage: function (pageId) {
 		if (this.__unloadingPage) {
 			return;
@@ -106,7 +102,7 @@ window.ScrollPagination = React.createClass({
 	},
 
 	__loadPrevPage: function () {
-		if (this.__loadingPrevPage || !this.__hasPrevPage) {
+		if (this.__loadingPrevPage || !this.props.hasPrevPage) {
 			return;
 		}
 		this.__loadingPrevPage = true;
@@ -114,121 +110,87 @@ window.ScrollPagination = React.createClass({
 	},
 
 	__loadNextPage: function () {
-		if (this.__loadingNextPage || !this.__hasNextPage) {
+		if (this.__loadingNextPage || !this.props.hasNextPage) {
 			return;
 		}
 		this.__loadingNextPage = true;
 		this.props.loadNextPage();
 	},
 
-	__determinePagesDelta: function (pageIds) {
-		var renderedPageIds = this.__renderedPageIds;
-
-		// find new page id (if any)
-		// must be either at beginning or end of list
-		var newPageId = null;
-		var newPagePosition = null;
-		var unloadedPageId = null;
-		var unloadedPagePosition = null;
-		var firstPageId = pageIds[0];
-		var lastPageId = pageIds[pageIds.length-1];
-		if (renderedPageIds.indexOf(lastPageId) === -1) {
-			newPageId = lastPageId;
-			newPagePosition = "bottom";
-		} else if (renderedPageIds.indexOf(firstPageId) === -1) {
-			newPageId = firstPageId;
-			newPagePosition = "top";
-		} else if (pageIds.length > renderedPageIds.length) {
-			throw new Error("ScrollPagination: New pages must be inserted at beginning or end!\nold("+ renderedPageIds.join(", ") +")\nnew("+ pageIds.join(", ") +")");
+	__getScrollY: function () {
+		var scrollParent = this.__scrollParent;
+		if (scrollParent === window) {
+			return window.scrollY;
 		} else {
-			// find removed page id
-			// must be either at beginning or end of list
-			var firstRenderedPageId = renderedPageIds[0];
-			var lastRenderedPageId = renderedPageIds[renderedPageIds.length-1];
-			if (firstRenderedPageId !== firstPageId) {
-				unloadedPageId = renderedPageIds[0];
-				unloadedPagePosition = "top";
-			} else if (lastRenderedPageId !== lastPageId) {
-				unloadedPageId = lastRenderedPageId;
-				unloadedPagePosition = "bottom";
+			return scrollParent.scrollTop;
+		}
+	},
+
+	__setScrollY: function (scrollY) {
+		var scrollParent = this.__scrollParent;
+		if (scrollParent === window) {
+			return window.scrollTo(window.scrollX, scrollY);
+		} else {
+			return scrollParent.scrollTop = scrollY;
+		}
+	},
+
+	__updatePageIds: function () {
+		var oldPageIds = this.__pageIds;
+		var unloadedPageIdsTop = [];
+		var newPageIdsTop = [];
+		var pageIds = [];
+		React.Children.forEach(this.props.children, function (child) {
+			if (child.constructor.displayName === "ScrollPagination.Page") {
+				pageIds.push(child.props.id);
+			}
+		});
+		var i, len;
+		if (oldPageIds.length > 0) {
+			for (i = 0, len = oldPageIds.length; i < len; i++) {
+				if (pageIds.indexOf(oldPageIds[i]) === -1) {
+					unloadedPageIdsTop.push(oldPageIds[i]);
+				} else {
+					break;
+				}
+			}
+			for (i = 0, len = pageIds.length; i < len; i++) {
+				if (oldPageIds.indexOf(pageIds[i]) === -1) {
+					newPageIdsTop.push(pageIds[i]);
+				} else {
+					break;
+				}
 			}
 		}
+		this.__adjustScrollPosition(unloadedPageIdsTop, newPageIdsTop);
+		this.__pageIds = pageIds;
+	},
 
-		var pageNumDelta = pageIds.length - renderedPageIds.length;
-		if (newPageId && pageNumDelta !== 1 || unloadedPageId && pageNumDelta !== -1) {
-			throw new Error("ScrollPagination: May only add or remove a single page but there is a difference of "+ pageNumDelta +"!");
-		}
-
-		renderedPageIds = [].concat(pageIds);
-		this.__renderedPageIds = renderedPageIds;
-
-		this.__newPageId = newPageId;
-		this.__newPagePosition = newPagePosition;
-		this.__unloadedPageId = unloadedPageId;
-		this.__unloadedPagePosition = unloadedPagePosition;
+	__adjustScrollPosition: function (unloadedPageIdsTop, newPageIdsTop) {
+		var offset = 0;
+		var pages = this.__pages;
+		unloadedPageIdsTop.forEach(function (pageId) {
+			var height = pages[pageId].height;
+			offset += height;
+			delete pages[pageId];
+		});
+		newPageIdsTop.forEach(function (pageId) {
+			var height = pages[pageId].height;
+			offset += height;
+		});
+		this.__setScrollY(this.__getScrollY() + offset);
 	},
 
 	__updateDimensions: function () {
-		var unloadedPageHeights = this.__unloadedPageHeights;
-		var pageHeights = this.__pageHeights;
-
-		var newPageId = this.__newPageId;
-		var newPagePosition = this.__newPagePosition;
-		delete this.__newPagePosition;
-
-		var unloadedPageId = this.__unloadedPageId;
-		var unloadedPagePosition = this.__unloadedPagePosition;
-		delete this.__unloadedPageId;
-		delete this.__unloadedPagePosition;
-
-		if (unloadedPageId) {
-			delete pageHeights[unloadedPageId];
-		}
-
 		var el = this.refs.wrapper.getDOMNode();
-
-		var oldOffsetHeight = this.__offsetHeight;
-		var newOffsetHeight = el.offsetHeight;
-		var offsetHeightDelta = newOffsetHeight - oldOffsetHeight;
-		var oldPageHeight;
-		var pageHeightDelta = 0;
-
 		var scrollParent = this.__scrollParent;
-
-		if (newPageId) {
-			if (newPagePosition === "top") {
-				var oldPaddingTop = this.__paddingTop;
-				oldPageHeight = unloadedPageHeights[newPageId];
-				delete unloadedPageHeights[newPageId];
-				if (oldPageHeight && oldPageHeight !== offsetHeightDelta) {
-					pageHeightDelta = oldPageHeight - offsetHeightDelta;
-				}
-				if (this.__paddingTop < 1) {
-					var __scrollTop;
-					if (scrollParent === window) {
-						__scrollTop = window.scrollY;
-					} else {
-						__scrollTop = scrollParent.scrollTop;
-					}
-					this.__scrollY = __scrollTop + offsetHeightDelta;
-				}
-				this.__paddingTop = Math.max(this.__paddingTop - offsetHeightDelta - pageHeightDelta, 0);
-				this.refs.wrapper.getDOMNode().style.paddingTop = this.__paddingTop +"px";
-			} else { // bottom
-			}
-
-			pageHeights[newPageId] = offsetHeightDelta;
+		var viewportHeight = 0;
+		if (scrollParent === window) {
+			viewportHeight = window.innerHeight;
 		} else {
-			if (unloadedPagePosition === "top") {
-				oldPaddingTop = this.__paddingTop;
-				this.__paddingTop = this.__paddingTop + (offsetHeightDelta * -1); // negative delta
-				unloadedPageHeights[unloadedPageId] = offsetHeightDelta * -1;
-				this.refs.wrapper.getDOMNode().style.paddingTop = this.__paddingTop +"px";
-			}
+			viewportHeight = parseInt(window.getComputedStyle(scrollParent).height, 10);
 		}
-
-		newOffsetHeight = el.offsetHeight;
-		this.__offsetHeight = newOffsetHeight;
+		var contentHeight = el.offsetHeight;
 
 		var offsetTop = 0;
 		var ref = el;
@@ -236,15 +198,12 @@ window.ScrollPagination = React.createClass({
 			offsetTop += ref.offsetTop || 0;
 			ref = ref.offsetParent;
 		}
-		this.__offsetTop = offsetTop;
 
-		if (scrollParent) {
-			if (scrollParent === window) {
-				this.__viewportHeight = window.innerHeight;
-			} else {
-				this.__viewportHeight = parseInt(window.getComputedStyle(scrollParent).height, 10);
-			}
-		}
+		this.__dimentions = {
+			viewportHeight: viewportHeight,
+			contentHeight: contentHeight,
+			offsetTop: offsetTop
+		};
 	},
 
 	__evaluatePagesMutation: function (e) {
@@ -258,34 +217,35 @@ window.ScrollPagination = React.createClass({
 			return;
 		}
 
-		var scrollY;
-		if (this.__scrollParent === window) {
-			scrollY = window.scrollY;
-		} else {
-			scrollY = this.__scrollParent.scrollTop;
+		var pages = this.__pages;
+		var pageIds = this.__pageIds;
+		var firstPage = pages[pageIds[0]];
+		var secondPage = pages[pageIds[1]];
+		var lastPage = pages[pageIds[pageIds.length-1]];
+		var secondLastPage = pages[pageIds[pageIds.length-2]];
+
+		if (pages.length < 4) {
+			secondPage = null;
+			secondLastPage = null;
 		}
-		var viewportHeight = this.__viewportHeight;
-		var paddingTop = this.__paddingTop;
-		var remainingScrollBottom = this.__offsetHeight + this.__offsetBottom - scrollY - viewportHeight;
-		var pagesOffsetTop = this.__offsetTop + paddingTop;
-		var remainingScrollTop = scrollY - pagesOffsetTop;
 
-		var pageIds = this.props.pageIds;
-		var pageHeights = this.__pageHeights;
-		var firstPageId = pageIds[0];
-		var firstPageHeight = pageHeights[firstPageId];
-		var lastPageId = pageIds[pageIds.length-1];
-		var lastPageHeight = pageHeights[lastPageId];
+		var viewportHeight = this.__dimentions.viewportHeight;
+		var contentHeight = this.__dimentions.contentHeight;
+		var offsetTop = this.__dimentions.offsetTop;
+		var scrollY = this.__getScrollY();
 
-		if ( !lastPageHeight || remainingScrollBottom <= (lastPageHeight / 3)) {
-			if (firstPageHeight && (scrollY - pagesOffsetTop - firstPageHeight) > viewportHeight && this.__newPageId !== firstPageId) {
-				this.__unloadPage(firstPageId);
+		var remainingScrollBottom = contentHeight - scrollY - viewportHeight + offsetTop;
+		var remainingScrollTop = contentHeight - remainingScrollBottom - viewportHeight;
+
+		if (remainingScrollBottom < (lastPage.height / 3)) {
+			if (secondPage && remainingScrollTop > (firstPage.height + secondPage.height)) {
+				this.__unloadPage(firstPage.id);
 			} else {
 				this.__loadNextPage();
 			}
-		} else if ((paddingTop > 1 || this.__hasPrevPage) && remainingScrollTop <= (firstPageHeight / 3)) {
-			if (pageIds.length > 1 && (this.__offsetHeight - scrollY - viewportHeight) > lastPageHeight && this.__newPageId !== lastPageId) {
-				this.__unloadPage(lastPageId);
+		} else if (remainingScrollTop < (firstPage.height / 3)) {
+			if (secondLastPage && remainingScrollBottom > (lastPage.height + secondLastPage.height)) {
+				this.__unloadPage(lastPage.id);
 			} else {
 				this.__loadPrevPage();
 			}
@@ -299,6 +259,21 @@ window.ScrollPagination = React.createClass({
 	__handleResize: function () {
 		this.__updateDimensions();
 		this.__evaluatePagesMutation();
+	}
+});
+
+ScrollPagination.Page = React.createClass({
+	displayName: "ScrollPagination.Page",
+
+	componentDidMount: function () {
+		this.props.onPageEvent({
+			name: "mount",
+			height: this.getDOMNode().offsetHeight
+		});
+	},
+
+	render: function () {
+		return React.DOM.div(null, this.props.children);
 	}
 });
 

@@ -2,23 +2,28 @@
 	"use strict";
 
 	var ScrollPagination = window.ScrollPagination;
+	var Page = ScrollPagination.Page;
 
 	var Main = React.createClass({
 		displayName: "Main",
 
 		render: function () {
 			return ScrollPagination({
+				ref: "scrollPagination",
 				loadNextPage: this.props.loadNextPage,
 				loadPrevPage: this.props.loadPrevPage,
 				unloadPage: this.props.unloadPage,
 				hasNextPage: this.props.hasNextPage,
 				hasPrevPage: this.props.hasPrevPage,
-				pageIds: this.props.pages.map(function (page) { return page.id; })
-			}, this.props.pages.map(function (page) {
-				return page.items.map(function (item) {
-					return React.DOM.div({ key: item.id }, item.text);
-				}.bind(this));
+			}, this.props.pages.map(function (page, index) {
+				return Page({ key: page.id, id: page.id, onPageEvent: this.__handlePageEvent.bind(this, page.id) }, page.items.map(function (item) {
+					return React.DOM.div({ key: item.id, style: { paddingTop: index + "px" } }, item.text);
+				}.bind(this)));
 			}.bind(this)));
+		},
+
+		__handlePageEvent: function (pageId, height) {
+			this.refs.scrollPagination.handlePageEvent(pageId, height);
 		}
 	});
 
@@ -40,6 +45,7 @@
 			items: pageItems("page-"+ (i+1))
 		});
 	}
+	loadedPages = pages.slice(0, 3);
 
 	var hasNextPage = function () {
 		if (loadedPages[loadedPages.length-1] === pages[pages.length-1]) {
@@ -104,7 +110,7 @@
 			}
 
 			if (page === null) {
-				throw new Error("Invalid attempt to unload page: "+ pageId);
+				throw new Error("Invalid attempt to unload page: "+ pageId +"\n"+ JSON.stringify(loadedPages.map(function (p) { return p.id; })));
 			}
 
 			loadedPages = loadedPages.slice(0, index).concat(loadedPages.slice(index+1, loadedPages.length));

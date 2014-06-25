@@ -5,32 +5,55 @@ ScrollPagination
 
 ## Usage
 
+```javascript
+var Page = ScrollPagination.Page;
+function handlePageEvent(pageId, event) {
+	this.refs.scrollPagination.handlePageEvent(pageId, event);
+}
+```
 ```
 /** @jsx React.DOM */
 <ScrollPagination
-	pageIds={ Array() }
+	ref="scrollPagination"
 	hasPrevPage={ Boolean() }
 	hasNextPage={ Boolean() }
 	loadPrevPage={ function(){} }
 	loadNextPage={ function(){} }
 	unloadPage={ function (pageId) {} }>
 
-	<h1>Render content here</h1>
+	<Page id="page-1" onPageEvent={handlePageEvent.bind(this, "page-1")}>
+		<h1>Render first page of content here</h1>
+	</Page>
+
+	<Page id="page-2" onPageEvent={handlePageEvent.bind(this, "page-2")}>
+		<h1>Render second page of content here</h1>
+	</Page>
 </ScrollPagination>
 ```
 
 ```javascript
+function handlePageEvent(pageId, event) {
+	this.refs.scrollPagination.handlePageEvent(pageId, event);
+}
+
 ScrollPagination({
-	pageId: Array(),
+	ref: "scrollPagination",
 	hasPrevPage: Boolean(),
 	hasNextPage: Boolean(),
 	loadPrevPage: function(){},
 	loadNextPage: function(){},
-	unloadPage: function (pageId) {}
-}, React.DOM.h1(null, "Render content here"))
+},
+	ScrollPagination.Page({
+		id: "page-1",
+		onPageEvent: handlePageEvent.bind(this, "page-1") },
+			React.DOM.h1(null, "Render first page of content here")),
+	ScrollPagination.Page({
+		id: "page-2",
+		onPageEvent: handlePageEvent.bind(this, "page-2") },
+			React.DOM.h1(null, "Render second page of content here")))
 ```
 
-- `pageIds` must be an array of all page ids currently rendered. The initial render must only contain a single page id and subsequent renders must only add or remove a single page id.
+**ScrollPagination:**
 
 - `hasPrevPage` must be a boolean indicating if `loadPrevPage` should be called.
 
@@ -42,6 +65,12 @@ ScrollPagination({
 
 - `unloadPage` must be a function that causes a re-render with the specified page id removed.
 
+**ScrollPagination.Page:**
+
+- `id` must be the id of the page (used for `unloadPage`).
+
+- `onPageEvent` must be a function that calls the `ScrollPagination` instance with `pageId, event` (where `event` is the only argument `onPageEvent` is called with).
+
 ## What it does
 
 The scroll container will be determined when the component is first mounted (any parent element with `overflow:auto` or `overflow:scroll`, defaults to `window`).
@@ -50,7 +79,7 @@ The scroll container will be determined when the component is first mounted (any
 
 `unloadPage` is called before `loadPrevPage` or `loadNextPage` if there is a page at the opposite end of the visible area entirely out of view.
 
-The height of each rendered page is calculated and cached to determine when a new page should be loaded or an old one removed. Page heights for pages removed from the top are also kept to help keep the padding accurate if/when the page is loaded again.
+Each page calculates it's own height and reports it to the `ScrollPagination` instance via `onPageEvent`. The `ScrollPagination` instance keeps track of what pages are added or removed from the top and adjusts the scroll position.
 
 ## Why
 
