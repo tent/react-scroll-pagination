@@ -85,7 +85,7 @@ Each page calculates it's own height and reports it to the `ScrollPagination` in
 
 ## Why
 
-Infinite scroll implementations where DOM nodes are continually added without cleaning up cause the DOM to get __very__ slow the farther you scroll down (especially when you have any kind of dynamic content). Removing what you don't need from the DOM and replacing it with padding allows scrolling through pages without slowing down the DOM.
+Infinite scroll implementations where DOM nodes are continually added without cleaning up cause the DOM to get __very__ slow the farther you scroll down (especially when you have any kind of dynamic content). Removing what you don't need from the DOM allows scrolling through pages without slowing down the DOM.
 
 ## How you can help
 
