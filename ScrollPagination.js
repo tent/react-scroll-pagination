@@ -202,6 +202,9 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		while (ref) {
 			offsetTop += ref.offsetTop || 0;
 			ref = ref.offsetParent;
+			if (ref === scrollParent) {
+				break;
+			}
 		}
 
 		this.__dimentions = {
