@@ -212,7 +212,7 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 	},
 
 	__evaluatePagesMutation: function (e) {
-		if (this.__offsetHeight === 0) {
+		if (this.__dimentions.contentHeight === 0) {
 			return;
 		}
 		if (this.__loadingNextPage || this.__loadingPrevPage || this.__unloadingPage || !(this.props.hasNextPage || this.props.hasPrevPage)) {
