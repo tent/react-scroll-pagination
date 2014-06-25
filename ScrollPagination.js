@@ -242,13 +242,13 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		var remainingScrollBottom = contentHeight - scrollY - viewportHeight + offsetTop;
 		var remainingScrollTop = contentHeight - remainingScrollBottom - viewportHeight;
 
-		if (remainingScrollBottom < (lastPage.height / 3)) {
+		if (lastPage && remainingScrollBottom < (lastPage.height / 3)) {
 			if (secondPage && remainingScrollTop > (firstPage.height + secondPage.height)) {
 				this.__unloadPage(firstPage.id);
 			} else {
 				this.__loadNextPage();
 			}
-		} else if (remainingScrollTop < (firstPage.height / 3)) {
+		} else if (firstPage && remainingScrollTop < (firstPage.height / 3)) {
 			if (secondLastPage && remainingScrollBottom > (lastPage.height + secondLastPage.height)) {
 				this.__unloadPage(lastPage.id);
 			} else {
