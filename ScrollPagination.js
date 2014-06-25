@@ -140,11 +140,16 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		var unloadedPageIdsTop = [];
 		var newPageIdsTop = [];
 		var pageIds = [];
-		React.Children.forEach(this.props.children, function (child) {
-			if (child.constructor.displayName === "ScrollPagination.Page") {
-				pageIds.push(child.props.id);
-			}
-		});
+		var findPages = function (children) {
+			React.Children.forEach(children, function (child) {
+				if (child.constructor.displayName === "ScrollPagination.Page") {
+					pageIds.push(child.props.id);
+				} else if (child.constructor.displayName === "ul") {
+					findPages(child.props.children);
+				}
+			});
+		};
+		findPages(this.props.children);
 		var i, len;
 		if (oldPageIds.length > 0) {
 			for (i = 0, len = oldPageIds.length; i < len; i++) {
@@ -265,6 +270,12 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 ScrollPagination.Page = React.createClass({
 	displayName: "ScrollPagination.Page",
 
+	getDefaultProps: function () {
+		return {
+			component: React.DOM.div
+		};
+	},
+
 	componentDidMount: function () {
 		this.props.onPageEvent({
 			name: "mount",
@@ -273,7 +284,7 @@ ScrollPagination.Page = React.createClass({
 	},
 
 	render: function () {
-		return React.DOM.div(null, this.props.children);
+		return this.props.component(null, this.props.children);
 	}
 });
 

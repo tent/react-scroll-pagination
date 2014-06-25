@@ -71,6 +71,8 @@ ScrollPagination({
 
 - `onPageEvent` must be a function that calls the `ScrollPagination` instance with `pageId, event` (where `event` is the only argument `onPageEvent` is called with).
 
+- `component` must be a component, defaults to `React.DOM.li`.
+
 ## What it does
 
 The scroll container will be determined when the component is first mounted (any parent element with `overflow:auto` or `overflow:scroll`, defaults to `window`).
