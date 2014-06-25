@@ -277,14 +277,25 @@ ScrollPagination.Page = React.createClass({
 	},
 
 	componentDidMount: function () {
-		this.props.onPageEvent({
-			name: "mount",
-			height: this.getDOMNode().offsetHeight
-		});
+		this.__determineHeight();
+	},
+
+	componentDidUpdate: function () {
+		if (this.__height === 0) {
+			this.__determineHeight();
+		}
 	},
 
 	render: function () {
 		return this.props.component(null, this.props.children);
+	},
+
+	__determineHeight: function () {
+		var height = this.__height = this.getDOMNode().offsetHeight;
+		this.props.onPageEvent({
+			name: "mount",
+			height: height
+		});
 	}
 });
 
