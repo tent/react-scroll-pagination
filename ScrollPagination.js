@@ -142,6 +142,9 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		var pageIds = [];
 		var findPages = function (children) {
 			React.Children.forEach(children, function (child) {
+				if (child === null) {
+					return;
+				}
 				if (child.constructor.displayName === "ScrollPagination.Page") {
 					pageIds.push(child.props.id);
 				} else if (child.constructor.displayName === "ul") {
