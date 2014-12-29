@@ -36,21 +36,21 @@ function handlePageEvent(pageId, event) {
 	this.refs.scrollPagination.handlePageEvent(pageId, event);
 }
 
-ScrollPagination({
+React.createElement(ScrollPagination, {
 	ref: "scrollPagination",
 	hasPrevPage: Boolean(),
 	hasNextPage: Boolean(),
 	loadPrevPage: function(){},
 	loadNextPage: function(){},
 },
-	ScrollPagination.Page({
+	React.createElement(ScrollPagination.Page, {
 		id: "page-1",
 		onPageEvent: handlePageEvent },
-			React.DOM.h1(null, "Render first page of content here")),
-	ScrollPagination.Page({
+			React.createElement('h1', null, "Render first page of content here")),
+	React.createElement(ScrollPagination.Page, {
 		id: "page-2",
 		onPageEvent: handlePageEvent },
-			React.DOM.h1(null, "Render second page of content here")))
+			React.createElement('h1', null, "Render second page of content here")))
 ```
 
 **ScrollPagination:**

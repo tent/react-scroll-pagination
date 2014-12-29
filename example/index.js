@@ -8,7 +8,7 @@
 		displayName: "Main",
 
 		render: function () {
-			return ScrollPagination({
+			return React.createElement(ScrollPagination, {
 				ref: "scrollPagination",
 				loadNextPage: this.props.loadNextPage,
 				loadPrevPage: this.props.loadPrevPage,
@@ -16,8 +16,8 @@
 				hasNextPage: this.props.hasNextPage,
 				hasPrevPage: this.props.hasPrevPage,
 			}, this.props.pages.map(function (page, index) {
-				return Page({ key: page.id, id: page.id, onPageEvent: this.__handlePageEvent }, page.items.map(function (item) {
-					return React.DOM.div({ key: item.id, style: { paddingTop: index + "px" } }, item.text);
+				return React.createElement(Page, { key: page.id, id: page.id, onPageEvent: this.__handlePageEvent }, page.items.map(function (item) {
+					return React.createElement('div', { key: item.id, style: { paddingTop: index + "px" } }, item.text);
 				}.bind(this)));
 			}.bind(this)));
 		},
@@ -123,7 +123,7 @@
 	};
 
 	var el = document.getElementById("main");
-	var view = React.renderComponent(Main({
+	var view = React.render(React.createElement(Main, {
 		pages: loadedPages,
 		loadNextPage: loadNextPage,
 		loadPrevPage: loadPrevPage,
