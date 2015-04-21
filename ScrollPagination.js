@@ -179,7 +179,7 @@ var ScrollPagination = window.ScrollPagination = React.createClass({
 		var pages = this.__pages;
 		unloadedPageIdsTop.forEach(function (pageId) {
 			var height = pages[pageId].height;
-			offset += height;
+			offset -= height;
 			delete pages[pageId];
 		});
 		newPageIdsTop.forEach(function (pageId) {
