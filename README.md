@@ -7,53 +7,52 @@ ScrollPagination
 
 ```javascript
 var Page = ScrollPagination.Page;
-function handlePageEvent(pageId, event) {
-	this.refs.scrollPagination.handlePageEvent(pageId, event);
-}
+var manager = new ScrollPagination.Manager();
 ```
 ```
 /** @jsx React.DOM */
 <ScrollPagination
-	ref="scrollPagination"
+	manager={ manager }
 	hasPrevPage={ Boolean() }
 	hasNextPage={ Boolean() }
 	loadPrevPage={ function(){} }
 	loadNextPage={ function(){} }
 	unloadPage={ function (pageId) {} }>
 
-	<Page id="page-1" onPageEvent={handlePageEvent}>
+	<Page id="page-1" manager={ manager }>
 		<h1>Render first page of content here</h1>
 	</Page>
 
-	<Page id="page-2" onPageEvent={handlePageEvent}>
+	<Page id="page-2" manager={ manager }>
 		<h1>Render second page of content here</h1>
 	</Page>
 </ScrollPagination>
 ```
 
 ```javascript
-function handlePageEvent(pageId, event) {
-	this.refs.scrollPagination.handlePageEvent(pageId, event);
-}
+var Page = ScrollPagination.Page;
+var manager = new ScrollPagination.Manager();
 
 React.createElement(ScrollPagination, {
-	ref: "scrollPagination",
+	manager: manager,
 	hasPrevPage: Boolean(),
 	hasNextPage: Boolean(),
 	loadPrevPage: function(){},
 	loadNextPage: function(){},
 },
-	React.createElement(ScrollPagination.Page, {
+	React.createElement(Page, {
 		id: "page-1",
-		onPageEvent: handlePageEvent },
+		manager: manager },
 			React.createElement('h1', null, "Render first page of content here")),
-	React.createElement(ScrollPagination.Page, {
+	React.createElement(Page, {
 		id: "page-2",
-		onPageEvent: handlePageEvent },
+		manager: manager },
 			React.createElement('h1', null, "Render second page of content here")))
 ```
 
 **ScrollPagination:**
+
+- `manager` must be an instance of `ScrollPagination.Manager`.
 
 - `hasPrevPage` must be a boolean indicating if `loadPrevPage` should be called.
 
@@ -67,9 +66,9 @@ React.createElement(ScrollPagination, {
 
 **ScrollPagination.Page:**
 
-- `id` must be the id of the page (used for `unloadPage`).
+- `manager` must be an instance of `ScrollPagination.Manager` and the same one passed to the `ScrollPagination` component.
 
-- `onPageEvent` must be a function that calls the `ScrollPagination` instance with `pageId, event` (where `event` is the only argument `onPageEvent` is called with).
+- `id` must be the id of the page (used for `unloadPage`).
 
 - `component` must be a component, defaults to `React.DOM.li`.
 
@@ -81,7 +80,7 @@ The scroll container will be determined when the component is first mounted (any
 
 `unloadPage` is called before `loadPrevPage` or `loadNextPage` if there is a page at the opposite end of the visible area entirely out of view.
 
-Each page calculates it's own height and reports it to the `ScrollPagination` instance via `onPageEvent`. The `ScrollPagination` instance keeps track of what pages are added or removed from the top and adjusts the scroll position.
+Each page calculates it's own height and reports it to the `ScrollPagination` instance via the `ScrollPagination.Manager`. The `ScrollPagination` instance keeps track of what pages are added or removed from the top and adjusts the scroll position.
 
 ## Why
 

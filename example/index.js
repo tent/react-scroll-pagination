@@ -7,23 +7,26 @@
 	var Main = React.createClass({
 		displayName: "Main",
 
+		getDefaultProps: function () {
+			return {
+				manager: new ScrollPagination.Manager()
+			};
+		},
+
 		render: function () {
+			var manager = this.props.manager;
 			return React.createElement(ScrollPagination, {
-				ref: "scrollPagination",
+				manager: manager,
 				loadNextPage: this.props.loadNextPage,
 				loadPrevPage: this.props.loadPrevPage,
 				unloadPage: this.props.unloadPage,
 				hasNextPage: this.props.hasNextPage,
 				hasPrevPage: this.props.hasPrevPage,
 			}, this.props.pages.map(function (page, index) {
-				return React.createElement(Page, { key: page.id, id: page.id, onPageEvent: this.__handlePageEvent }, page.items.map(function (item) {
+				return React.createElement(Page, { key: page.id, id: page.id, manager: manager }, page.items.map(function (item) {
 					return React.createElement('div', { key: item.id, style: { paddingTop: index + "px" } }, item.text);
 				}.bind(this)));
 			}.bind(this)));
-		},
-
-		__handlePageEvent: function (pageId, height) {
-			this.refs.scrollPagination.handlePageEvent(pageId, height);
 		}
 	});
 
