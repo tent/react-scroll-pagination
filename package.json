@@ -1,0 +1,19 @@
+{
+  "name": "react-scroll-pagination",
+  "version": "1.0.0",
+  "description": "React component for handing infinite scroll without infinitely growing the DOM.",
+  "main": "ScrollPagination.js",
+  "directories": {
+    "example": "example"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cupcake/react-scroll-pagination"
+  },
+  "author": "Jesse Stuart",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/cupcake/react-scroll-pagination/issues"
+  },
+  "homepage": "https://github.com/cupcake/react-scroll-pagination"
+}
